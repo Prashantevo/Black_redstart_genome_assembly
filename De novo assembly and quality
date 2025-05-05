@@ -1,4 +1,9 @@
-# 1. Denovo Assembly using Hifiasm
+# 1. De novo Assembly using Hifiasm
+
+## 1.1 Convert BAM to FASTQ
+```bash
+bam2fastq -o black_redstart black_redstart_hifi_reads.bam
+
  
 1.1 First, convert the BAM file to FASTQ format
 

@@ -1,0 +1,34 @@
+1. Denovo Assembly using Hifiasm
+1.1 First, convert the BAM file to FASTQ format
+
+bam2fastq -o black_redstart black_redstart_hifi_reads.bam
+
+1.2 de novo assembly
+
+hifiasm -o black_redstart -t32 black_redstart.fastq.gz
+
+2. Mitogenome Assembly using mitoHiFi
+python3 ./MitoHiFi/src/mitohifi.py -p 90 -r black_redstart.fastq -t 20 -g daurian.gb -o 2 -f daurian.fasta
+
+3. Quality Assessment 
+3.1 BUSCO
+busco -i ./black_redstart.ctg.fa -l passeriformes_odb10 -o BUSCO_birds -m genome -c 20 -f
+
+3.2 Assembly plot and Mapping statistics
+
+blobtools create --fasta ./black_redstart.ctg.fa  PGBR/
+
+#use minimap2 to get bam file
+./minimap2 -ax map-hifi -t 16 black_redstart.ctg.fa black_redstart.fastq | samtools sort -@ 16 -O BAM -o brPb.bam 
+blobtools add --cov brPb.bam --threads 16   PGBR/
+makeblastdb -in nt -dbtype nucl
+blastn -db nt -query brPb.fasta -outfmt "6 qseqid staxids bitscore std" -max_target_seqs 10 -max_hsps 1 -evalue 1e-25 -num_threads 45 -out brPb.ncbi.blastn.out
+blobtools add --hits brPb.ncbi.blastn.out --taxdump taxdump --taxrule bestsumorder --replace --bitscore 100 PGBR/
+blobtools add --busco full_table.tsv PGBR/
+blobtools view  --plot --view snail PGBR/
+blobtools view  --plot --view cumulative PGBR/
+blobtools view  --plot --view blob PGBR/
+
+#Mapping stats
+samtools index brPb.bam
+samtools flagstat brPb.bam

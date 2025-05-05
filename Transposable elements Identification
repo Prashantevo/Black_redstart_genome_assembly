@@ -1,0 +1,10 @@
+# Transposable element identification
+
+./RepeatMasker/RepeatModeler-2.0.1/BuildDatabase -name black_redstart -engine ncbi black_redstart.ctg.fa
+./RepeatMasker/RepeatModeler-2.0.1/RepeatModeler -pa 8 -engine ncbi -database black_redstart 
+
+# Download current release of repeat library from repbase database (https://www.girinst.org/server/RepBase/)
+cat black_redstart-families.fa ./RepeatMasker/Libraries/RepeatMaskerLib.fasta > combined_repeat_libs.fasta
+./RepeatMasker/RepeatMasker -pa 5 -s -lib combined_repeat_libs.fasta -dir RMasker -e rmblast black_redstart.ctg.fa 
+
+##Repeat same steps for other selected species 

@@ -1,72 +1,44 @@
-# Genome Assembly and Quality Assessment Pipeline
+# 1. De novo Assembly using Hifiasm
 
-## 1. De novo Assembly using Hifiasm
-
-### 1.1 Convert BAM to FASTQ
-```bash
+## 1.1 Convert BAM to FASTQ
+bash
 bam2fastq -o black_redstart black_redstart_hifi_reads.bam
-1.2 De novo assembly with Hifiasm
-bash
-Copy
-Edit
-hifiasm -o black_redstart -t32 black_redstart.fastq.gz
-2. Mitogenome Assembly using MitoHiFi
-bash
-Copy
-Edit
-python3 ./MitoHiFi/src/mitohifi.py -p 90 -r black_redstart.fastq -t 20 -g daurian.gb -o 2 -f daurian.fasta
-3. Quality Assessment
-3.1 BUSCO Assessment
-bash
-Copy
-Edit
-busco -i ./black_redstart.ctg.fa -l passeriformes_odb10 -o BUSCO_birds -m genome -c 20 -f
-3.2 Assembly Plot and Mapping Statistics (BlobTools)
-Create BlobTools database
-bash
-Copy
-Edit
-blobtools create --fasta ./black_redstart.ctg.fa PGBR/
-Mapping reads with minimap2 and sorting BAM
-bash
-Copy
-Edit
-./minimap2 -ax map-hifi -t 16 black_redstart.ctg.fa black_redstart.fastq | samtools sort -@ 16 -O BAM -o brPb.bam
-Add coverage to BlobTools
-bash
-Copy
-Edit
-blobtools add --cov brPb.bam --threads 16 PGBR/
-Run BLAST against NCBI nt
-bash
-Copy
-Edit
-makeblastdb -in nt -dbtype nucl
 
-blastn -db nt -query brPb.fasta -outfmt "6 qseqid staxids bitscore std" \
-  -max_target_seqs 10 -max_hsps 1 -evalue 1e-25 \
-  -num_threads 45 -out brPb.ncbi.blastn.out
-Add BLAST hits to BlobTools
-bash
-Copy
-Edit
-blobtools add --hits brPb.ncbi.blastn.out --taxdump taxdump \
-  --taxrule bestsumorder --replace --bitscore 100 PGBR/
-Add BUSCO results
-bash
-Copy
-Edit
+ 
+1.1 First, convert the BAM file to FASTQ format
+
+bam2fastq -o black_redstart black_redstart_hifi_reads.bam
+
+ 1.2 de novo assembly
+
+hifiasm -o black_redstart -t32 black_redstart.fastq.gz
+
+# 2. Mitogenome Assembly using mitoHiFi
+python3 ./MitoHiFi/src/mitohifi.py -p 90 -r black_redstart.fastq -t 20 -g daurian.gb -o 2 -f daurian.fasta
+
+# 3. Quality Assessment 
+
+3.1 BUSCO
+
+busco -i ./black_redstart.ctg.fa -l passeriformes_odb10 -o BUSCO_birds -m genome -c 20 -f
+
+ 3.2 Assembly plot and Mapping statistics
+
+blobtools create --fasta ./black_redstart.ctg.fa  PGBR/
+
+3.3 use minimap2 to get bam file
+
+./minimap2 -ax map-hifi -t 16 black_redstart.ctg.fa black_redstart.fastq | samtools sort -@ 16 -O BAM -o brPb.bam 
+blobtools add --cov brPb.bam --threads 16   PGBR/
+makeblastdb -in nt -dbtype nucl
+blastn -db nt -query brPb.fasta -outfmt "6 qseqid staxids bitscore std" -max_target_seqs 10 -max_hsps 1 -evalue 1e-25 -num_threads 45 -out brPb.ncbi.blastn.out
+blobtools add --hits brPb.ncbi.blastn.out --taxdump taxdump --taxrule bestsumorder --replace --bitscore 100 PGBR/
 blobtools add --busco full_table.tsv PGBR/
-Generate BlobTools plots
-bash
-Copy
-Edit
-blobtools view --plot --view snail PGBR/
-blobtools view --plot --view cumulative PGBR/
-blobtools view --plot --view blob PGBR/
-3.3 Mapping Statistics with SAMtools
-bash
-Copy
-Edit
+blobtools view  --plot --view snail PGBR/
+blobtools view  --plot --view cumulative PGBR/
+blobtools view  --plot --view blob PGBR/
+
+3.3 Mapping stats
+
 samtools index brPb.bam
 samtools flagstat brPb.bam

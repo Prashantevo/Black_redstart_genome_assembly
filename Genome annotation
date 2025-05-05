@@ -1,2 +1,13 @@
-
+# Braker
 singularity exec --bind ./redstart --bind /scratch/Tools:/scratch/Tools --bind ./rnaseq_reads:./rnaseq_reads ./braker3.sif braker.pl --species=Blackredstart --genome=./black_redstart.ctg.fa.masked --rnaseq_sets_ids B-7-FE,B-7-g,B-7-L,B-7-N,B-7-P,B-7-SH,B-7-X,B-7-XJ --rnaseq_sets_dirs=./rnaseq_reads --threads 12 --prot_seq=./Vertebrata.fa --AUGUSTUS_ab_initio --busco_lineage passeriformes_odb10 2>&1 | tee braker.log
+
+# Functional annotations
+
+wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+gunzip uniprot_sprot.fasta.gz
+./ncbi-blast-2.15.0+/bin/makeblastdb -in uniprot_sprot.fasta -dbtype prot -out swissprot
+./ncbi-blast-2.15.0+/bin/blastp -query braker.aa -db swissprot -out blastp_results.txt -evalue 1e-5 -outfmt "6 qseqid sacc pident length evalue bitscore stitle"
+
+./interproscan.sh -i ./cleaned_braker.aa -appl pfam -dp -f -iprlookup -t p -f tsv 2>&1 | tee interpro.log
+## combine gff
+python3 combinegff.py 

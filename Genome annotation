@@ -1,0 +1,2 @@
+
+singularity exec --bind ./redstart --bind /scratch/Tools:/scratch/Tools --bind ./rnaseq_reads:./rnaseq_reads ./braker3.sif braker.pl --species=Blackredstart --genome=./black_redstart.ctg.fa.masked --rnaseq_sets_ids B-7-FE,B-7-g,B-7-L,B-7-N,B-7-P,B-7-SH,B-7-X,B-7-XJ --rnaseq_sets_dirs=./rnaseq_reads --threads 12 --prot_seq=./Vertebrata.fa --AUGUSTUS_ab_initio --busco_lineage passeriformes_odb10 2>&1 | tee braker.log
